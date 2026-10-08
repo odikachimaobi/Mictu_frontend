@@ -1,0 +1,714 @@
+﻿<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MICTU-intern | Portal</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="script.js" defer></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: { 50: '#fef2f2', 100: '#fee2e2', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c', 900: '#7f1d1d' },
+                        dark: { 900: '#050505', 800: '#111111', 700: '#1a1a1a' },
+                    },
+                    animation: {
+                        'float': 'float 20s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%': { transform: 'translateX(0)' },
+                            '100%': { transform: 'translateX(-50%)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar and Animations */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #050505; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #262626; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #404040; }
+        
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+
+        /* Custom Floating Animations for Graphic */
+        @keyframes float-obj {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .anim-float-obj { animation: float-obj 6s ease-in-out infinite; }
+        .anim-float-fast { animation: float-obj 4s ease-in-out infinite reverse; }
+        
+        /* Laser Scan Line Animation */
+        @keyframes scan-line {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .anim-scan { animation: scan-line 3s linear infinite; }
+    </style>
+    
+    <!-- Dependencies for ID Card -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="bg-black text-white font-sans antialiased min-h-screen flex flex-col overflow-x-hidden selection:bg-red-600 selection:text-white">
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fixed top-24 right-4 z-[150] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="fixed w-full z-[100] bg-black/90 backdrop-blur-md border-b border-red-900/30 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <!-- Logo -->
+                <div class="flex items-center gap-3 cursor-pointer" onclick="goHome()">
+                    <div class="w-10 h-10 bg-red-600 flex items-center justify-center text-white font-black text-lg shadow-[0_0_20px_rgba(220,38,38,0.5)]">MI</div>
+                    <span class="font-black text-2xl tracking-tighter text-white uppercase">MICTU<span class="text-red-600">-intern</span></span>
+                </div>
+                
+                <!-- Desktop Nav -->
+                <div class="hidden md:flex items-center gap-8">
+                    <!-- Public View (Logged Out) -->
+                    <div id="nav-public-links" class="flex gap-8 items-center">
+                        <div class="flex gap-6 text-sm font-bold tracking-widest uppercase text-neutral-400">
+                            <span class="hover:text-red-500 cursor-pointer transition-colors">Platform</span>
+                            <span class="hover:text-red-500 cursor-pointer transition-colors">Architecture</span>
+                        </div>
+                        <div class="flex gap-4">
+                            <button onclick="openAuthModal('login', 'supervisor')" class="text-neutral-400 hover:text-white font-bold text-sm tracking-widest uppercase transition-colors">Staff Login</button>
+                            <button onclick="openAuthModal('register', 'student')" class="bg-red-600 hover:bg-red-500 text-white font-black text-sm px-6 py-2.5 rounded-none shadow-[0_0_15px_rgba(220,38,38,0.4)] tracking-widest uppercase transition-all">Apply Now</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Private View (Logged In) -->
+                    <div id="nav-private-links" class="hidden gap-6 items-center">
+                        <span id="nav-user-greeting" class="text-white font-bold uppercase tracking-wider text-sm border-r border-red-900/50 pr-6"></span>
+                        <button id="nav-id-btn" onclick="openIdCardModal()" class="hidden items-center gap-2 text-red-500 hover:text-red-400 text-sm font-bold uppercase tracking-wider transition-colors"><i class="fas fa-id-badge"></i> Access ID</button>
+                        <button onclick="logoutUser()" class="text-neutral-500 hover:text-white text-sm font-bold uppercase tracking-wider transition-colors" title="Disconnect"><i class="fas fa-power-off"></i></button>
+                    </div>
+                </div>
+
+                <!-- Mobile Menu Toggle -->
+                <div class="md:hidden flex items-center">
+                    <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="text-white hover:text-red-500 focus:outline-none p-2 text-2xl transition-colors">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden bg-black border-t border-red-900/30 shadow-xl absolute w-full left-0">
+            <div class="px-4 pt-4 pb-6 space-y-3 flex flex-col" id="nav-mobile-container">
+                <!-- Injected dynamically -->
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow flex flex-col mt-20 relative z-10 bg-black">
+        
+        <!-- ==================== 1. LANDING VIEW ==================== -->
+        <div id="view-landing" class="block w-full">
+            
+            <!-- Cinematic Video Hero Section -->
+            <section class="relative pt-32 pb-40 lg:pt-56 lg:pb-56 overflow-hidden flex items-center border-b border-red-900/30">
+                <!-- Video Background -->
+                <div class="absolute inset-0 z-0 bg-black">
+                    <!-- High quality tech/students learning video -->
+                    <video autoplay loop muted playsinline class="w-full h-full object-cover opacity-60 mix-blend-luminosity">
+                        <source src="https://videos.pexels.com/video-files/1181316/1181316-hd_1920_1080_24fps.mp4" type="video/mp4">
+                    </video>
+                    <!-- Red/Black Gradient Overlays for cinematic visibility -->
+                    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#020202]"></div>
+                    <div class="absolute inset-0 bg-red-600/30 mix-blend-multiply"></div>
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.85)_100%)]"></div>
+                </div>
+
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full text-center">
+                    
+                    <div class="reveal inline-flex items-center gap-2 px-5 py-2 rounded-full bg-black/50 text-red-500 text-xs font-bold mb-8 border border-red-900/50 uppercase tracking-widest backdrop-blur-md shadow-[0_0_30px_rgba(220,38,38,0.15)]">
+                        <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>
+                        MICTU Software Directorate
+                    </div>
+                    
+                    <h1 class="reveal reveal-delay-1 text-5xl md:text-7xl lg:text-8xl font-black text-white leading-[1.05] mb-6 max-w-5xl mx-auto tracking-tighter">
+                        CODE THE <span class="text-transparent bg-clip-text bg-gradient-to-br from-red-500 via-red-600 to-red-900">FUTURE.</span><br/>
+                        DEFEND THE <span class="text-transparent bg-clip-text bg-gradient-to-br from-red-500 via-red-600 to-red-900">CORE.</span>
+                    </h1>
+                    
+                    <p class="reveal reveal-delay-2 text-lg md:text-xl text-neutral-400 mb-12 leading-relaxed max-w-3xl mx-auto font-light">
+                        An elite, hyper-focused software engineering internship portal. Step out of the classroom and into active deployment. Track your impact, receive direct senior mentorship, and build enterprise-grade applications.
+                    </p>
+                    
+                    <div class="reveal reveal-delay-3 flex flex-col sm:flex-row gap-5 justify-center items-center">
+                        <button onclick="openAuthModal('register', 'student')" class="w-full sm:w-auto bg-red-600 text-white px-10 py-4 rounded-none border border-red-500 font-black tracking-widest uppercase hover:bg-red-700 hover:scale-105 transition-all shadow-[0_0_40px_rgba(220,38,38,0.4)] flex items-center justify-center gap-3">
+                            Apply For Clearance <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button onclick="openAuthModal('login', 'supervisor')" class="w-full sm:w-auto bg-black text-red-500 border border-red-900/50 hover:border-red-500 hover:text-white px-10 py-4 rounded-none font-black tracking-widest uppercase transition-all flex items-center justify-center gap-3">
+                            <i class="fas fa-shield-alt"></i> Staff Override
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tech Stack Marquee (New) -->
+            <section class="py-6 border-b border-red-900/30 bg-[#020202] overflow-hidden flex relative">
+                <div class="absolute left-0 w-24 h-full bg-gradient-to-r from-[#020202] to-transparent z-10"></div>
+                <div class="absolute right-0 w-24 h-full bg-gradient-to-l from-[#020202] to-transparent z-10"></div>
+                <div class="flex whitespace-nowrap animate-float opacity-50 text-red-600/50 text-2xl md:text-4xl font-black tracking-[0.5em] uppercase gap-16 px-8">
+                    <span>REACT.JS</span> <span>•</span>
+                    <span>NODE.JS</span> <span>•</span>
+                    <span>PYTHON</span> <span>•</span>
+                    <span>CYBERSECURITY</span> <span>•</span>
+                    <span>SYSTEM ARCHITECTURE</span> <span>•</span>
+                    <span>DEVOPS</span> <span>•</span>
+                    <span>REACT.JS</span> <span>•</span>
+                    <span>NODE.JS</span>
+                </div>
+            </section>
+            
+            <!-- Metrics/Stats Section -->
+            <section class="py-16 border-b border-red-900/30 bg-black">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-red-900/30">
+                        <div class="reveal">
+                            <p class="text-5xl font-black text-white mb-2 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">100+</p>
+                            <p class="text-xs text-red-500 font-bold uppercase tracking-widest">Active Interns</p>
+                        </div>
+                        <div class="reveal reveal-delay-1">
+                            <p class="text-5xl font-black text-white mb-2 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">98%</p>
+                            <p class="text-xs text-red-500 font-bold uppercase tracking-widest">Code Deployment</p>
+                        </div>
+                        <div class="reveal reveal-delay-2">
+                            <p class="text-5xl font-black text-white mb-2 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">24/7</p>
+                            <p class="text-xs text-red-500 font-bold uppercase tracking-widest">System Uptime</p>
+                        </div>
+                        <div class="reveal reveal-delay-3">
+                            <p class="text-5xl font-black text-red-600 mb-2 drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]">0</p>
+                            <p class="text-xs text-red-500 font-bold uppercase tracking-widest">Paper Trails</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- About / Mission Section -->
+            <section class="py-32 relative overflow-hidden bg-[#030303]">
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-red-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div class="flex flex-col lg:flex-row items-center gap-20">
+                        <div class="w-full lg:w-1/2 reveal">
+                            <div class="w-16 h-1 bg-red-600 mb-8 shadow-[0_0_15px_rgba(220,38,38,0.6)]"></div>
+                            <h2 class="text-4xl md:text-5xl font-black text-white mb-8 leading-tight tracking-tight">
+                                FORGING THE NEXT <br/>GENERATION OF <span class="text-red-600">ARCHITECTS.</span>
+                            </h2>
+                            <p class="text-neutral-400 text-lg mb-8 leading-relaxed">
+                                The MICTU internship program completely eradicates traditional observation. We immerse you directly into the bleeding edge of our active development cycles, server administration, and complex system architecture.
+                            </p>
+                            <ul class="space-y-6">
+                                <li class="flex items-start gap-4">
+                                    <div class="mt-1 w-6 h-6 rounded-none bg-red-950 border border-red-600 text-red-500 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(220,38,38,0.3)]"><i class="fas fa-terminal text-xs"></i></div> 
+                                    <p class="text-neutral-300 font-medium">Contribute to live, production-grade software solutions used by thousands.</p>
+                                </li>
+                                <li class="flex items-start gap-4">
+                                    <div class="mt-1 w-6 h-6 rounded-none bg-red-950 border border-red-600 text-red-500 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(220,38,38,0.3)]"><i class="fas fa-terminal text-xs"></i></div> 
+                                    <p class="text-neutral-300 font-medium">Undergo strict code reviews and advanced architecture mentorship from senior engineers.</p>
+                                </li>
+                                <li class="flex items-start gap-4">
+                                    <div class="mt-1 w-6 h-6 rounded-none bg-red-950 border border-red-600 text-red-500 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(220,38,38,0.3)]"><i class="fas fa-terminal text-xs"></i></div> 
+                                    <p class="text-neutral-300 font-medium">Log daily commits and track your measurable impact via our encrypted digital logbook.</p>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="w-full lg:w-1/2 reveal reveal-delay-2 relative flex items-center justify-center min-h-[500px]">
+                            <!-- Custom Animated Student Tech Graphic -->
+                            <div class="relative w-[350px] sm:w-[450px] aspect-square flex items-center justify-center">
+                                
+                                <!-- Background Pulse Glow -->
+                                <div class="absolute inset-0 bg-red-600/10 rounded-full blur-[60px] animate-pulse pointer-events-none"></div>
+
+                                <!-- Outer Orbit Ring -->
+                                <div class="absolute inset-0 border-[2px] border-red-900/30 rounded-full animate-[spin_20s_linear_infinite] pointer-events-none"></div>
+                                
+                                <!-- Middle Dashed Orbit Ring -->
+                                <div class="absolute inset-10 border border-red-500/30 border-dashed rounded-full animate-[spin_25s_linear_infinite_reverse] pointer-events-none"></div>
+                                
+                                <!-- Inner Solid Ring -->
+                                <div class="absolute inset-24 border-[3px] border-neutral-900 rounded-full shadow-[0_0_30px_rgba(220,38,38,0.15)_inset] pointer-events-none"></div>
+
+                                <!-- Orbiting Tech Icons (Outer Ring) -->
+                                <div class="absolute w-full h-full animate-[spin_20s_linear_infinite] pointer-events-none">
+                                    <div class="absolute -top-6 left-1/2 -translate-x-1/2 w-14 h-14 bg-black border-2 border-red-600 text-red-500 rounded-full flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(220,38,38,0.5)] animate-[spin_20s_linear_infinite_reverse]">
+                                        <i class="fab fa-react"></i>
+                                    </div>
+                                    <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 w-14 h-14 bg-black border-2 border-red-600 text-red-500 rounded-full flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(220,38,38,0.5)] animate-[spin_20s_linear_infinite_reverse]">
+                                        <i class="fab fa-python"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Orbiting Tech Icons (Middle Ring) -->
+                                <div class="absolute inset-10 animate-[spin_25s_linear_infinite_reverse] pointer-events-none">
+                                    <div class="absolute top-1/2 -left-6 -translate-y-1/2 w-12 h-12 bg-dark-900 border border-red-800 text-white rounded-full flex items-center justify-center text-xl shadow-lg animate-[spin_25s_linear_infinite]">
+                                        <i class="fab fa-node-js"></i>
+                                    </div>
+                                    <div class="absolute top-1/2 -right-6 -translate-y-1/2 w-12 h-12 bg-dark-900 border border-red-800 text-white rounded-full flex items-center justify-center text-xl shadow-lg animate-[spin_25s_linear_infinite]">
+                                        <i class="fas fa-database"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Floating Code Snippets -->
+                                <div class="absolute inset-0 pointer-events-none z-30">
+                                    <div class="absolute top-[15%] left-[5%] text-red-500/60 font-mono text-xs anim-float-fast bg-black/50 px-2 py-1 rounded border border-red-900/50 backdrop-blur-sm">&lt;App /&gt;</div>
+                                    <div class="absolute bottom-[20%] right-[5%] text-white/50 font-mono text-xs anim-float-obj bg-black/50 px-2 py-1 rounded border border-red-900/50 backdrop-blur-sm">npm run build</div>
+                                    <div class="absolute top-[30%] right-[0%] text-red-400/40 font-mono text-sm anim-float-fast">{ API }</div>
+                                </div>
+
+                                <!-- Central Figure: Student Learning Tech -->
+                                <div class="relative z-20 flex flex-col items-center justify-center w-48 h-48 bg-black rounded-full border-4 border-red-900 shadow-[0_0_50px_rgba(220,38,38,0.4)] anim-float-obj overflow-hidden">
+                                    <!-- Scanning Laser Effect -->
+                                    <div class="absolute top-0 left-0 w-full h-1 bg-red-500/80 blur-[2px] anim-scan z-30"></div>
+                                    
+                                    <i class="fas fa-user-graduate text-6xl text-white mb-2 drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] relative z-10"></i>
+                                    <div class="flex items-center gap-2 text-red-500 relative z-10">
+                                        <i class="fas fa-laptop-code text-3xl drop-shadow-[0_0_15px_rgba(220,38,38,0.8)]"></i>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- Roadmap Section (New) -->
+            <section class="py-24 bg-black border-y border-red-900/30">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center max-w-3xl mx-auto mb-20 reveal">
+                        <h3 class="text-4xl font-black text-white mb-4 uppercase tracking-tighter">The Progression <span class="text-red-600">Trajectory</span></h3>
+                        <p class="text-neutral-400">Your journey from onboarding to full-stack deployment within the MICTU ecosystem.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 relative">
+                        <!-- Connecting Line -->
+                        <div class="hidden md:block absolute top-1/2 left-0 w-full h-px bg-red-900/50 -translate-y-1/2 z-0"></div>
+
+                        <div class="relative z-10 bg-[#050505] border border-red-900/30 p-8 text-center reveal hover:border-red-500 transition-colors duration-500">
+                            <div class="w-16 h-16 mx-auto bg-black border-2 border-red-600 text-red-500 rounded-full flex items-center justify-center text-2xl font-black mb-6 shadow-[0_0_20px_rgba(220,38,38,0.4)]">01</div>
+                            <h4 class="text-xl font-bold text-white mb-3 uppercase tracking-wider">Clearance & Auth</h4>
+                            <p class="text-neutral-500 text-sm">Automated ID generation, system onboarding, and security protocol briefing.</p>
+                        </div>
+                        <div class="relative z-10 bg-[#050505] border border-red-900/30 p-8 text-center reveal reveal-delay-1 hover:border-red-500 transition-colors duration-500">
+                            <div class="w-16 h-16 mx-auto bg-black border-2 border-red-600 text-red-500 rounded-full flex items-center justify-center text-2xl font-black mb-6 shadow-[0_0_20px_rgba(220,38,38,0.4)]">02</div>
+                            <h4 class="text-xl font-bold text-white mb-3 uppercase tracking-wider">Core Development</h4>
+                            <p class="text-neutral-500 text-sm">Daily logbook tracking, task assignments, and active coding on internal sub-systems.</p>
+                        </div>
+                        <div class="relative z-10 bg-[#050505] border border-red-900/30 p-8 text-center reveal reveal-delay-2 hover:border-red-500 transition-colors duration-500">
+                            <div class="w-16 h-16 mx-auto bg-black border-2 border-red-600 text-red-500 rounded-full flex items-center justify-center text-2xl font-black mb-6 shadow-[0_0_20px_rgba(220,38,38,0.4)]">03</div>
+                            <h4 class="text-xl font-bold text-white mb-3 uppercase tracking-wider">Live Deployment</h4>
+                            <p class="text-neutral-500 text-sm">Final code reviews, architectural feedback, and pushing features to production.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Features Grid -->
+            <section class="py-32 bg-[#020202] relative border-b border-red-900/30">
+                <!-- Grid background pattern -->
+                <div class="absolute inset-0 bg-[linear-gradient(rgba(220,38,38,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(220,38,38,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
+                
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div class="text-center max-w-3xl mx-auto mb-20 reveal">
+                        <h3 class="text-4xl font-black text-white mb-4 uppercase tracking-tighter">Platform <span class="text-red-600">Capabilities</span></h3>
+                        <p class="text-neutral-400">Everything required to manage the internship lifecycle, engineered into a single, lightning-fast digital interface.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="bg-black border border-red-900/20 p-10 hover:-translate-y-2 hover:border-red-600 hover:shadow-[0_10px_40px_rgba(220,38,38,0.15)] transition-all duration-500 reveal reveal-delay-1 group relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-red-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500"></div>
+                            <div class="w-16 h-16 bg-red-950 border border-red-900/50 group-hover:bg-red-600 group-hover:text-white rounded-none flex items-center justify-center text-red-500 mb-8 text-2xl transition-all duration-500"><i class="fas fa-id-card"></i></div>
+                            <h4 class="text-2xl font-black text-white mb-4 uppercase tracking-wide">Automated ID System</h4>
+                            <p class="text-neutral-500 text-sm leading-relaxed">Generates printable, high-resolution ID cards with embedded QR codes instantly upon successful clearance registration.</p>
+                        </div>
+                        <div class="bg-black border border-red-900/20 p-10 hover:-translate-y-2 hover:border-red-600 hover:shadow-[0_10px_40px_rgba(220,38,38,0.15)] transition-all duration-500 reveal reveal-delay-2 group relative overflow-hidden">
+                             <div class="absolute top-0 left-0 w-full h-1 bg-red-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500"></div>
+                            <div class="w-16 h-16 bg-red-950 border border-red-900/50 group-hover:bg-red-600 group-hover:text-white rounded-none flex items-center justify-center text-red-500 mb-8 text-2xl transition-all duration-500"><i class="fab fa-whatsapp"></i></div>
+                            <h4 class="text-2xl font-black text-white mb-4 uppercase tracking-wide">Omnichannel Alerts</h4>
+                            <p class="text-neutral-500 text-sm leading-relaxed">Supervisors can push real-time announcements directly to student dashboards and simultaneously via the WhatsApp API integration.</p>
+                        </div>
+                        <div class="bg-black border border-red-900/20 p-10 hover:-translate-y-2 hover:border-red-600 hover:shadow-[0_10px_40px_rgba(220,38,38,0.15)] transition-all duration-500 reveal reveal-delay-3 group relative overflow-hidden">
+                             <div class="absolute top-0 left-0 w-full h-1 bg-red-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500"></div>
+                            <div class="w-16 h-16 bg-red-950 border border-red-900/50 group-hover:bg-red-600 group-hover:text-white rounded-none flex items-center justify-center text-red-500 mb-8 text-2xl transition-all duration-500"><i class="fas fa-code-branch"></i></div>
+                            <h4 class="text-2xl font-black text-white mb-4 uppercase tracking-wide">Digital Logbooks</h4>
+                            <p class="text-neutral-500 text-sm leading-relaxed">Submit progress reports, track daily system attendance securely, and receive encrypted, private architectural feedback from senior engineers.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Footer -->
+            <footer class="py-12 bg-black text-center border-t border-red-900/50">
+                <div class="flex justify-center items-center gap-3 mb-6">
+                    <div class="w-8 h-8 bg-red-600 flex items-center justify-center text-white font-black text-xs shadow-[0_0_15px_rgba(220,38,38,0.5)]">MI</div>
+                    <span class="font-black text-xl tracking-tighter text-white uppercase">MICTU<span class="text-red-600">-intern</span></span>
+                </div>
+                <p class="text-neutral-600 text-xs font-mono uppercase tracking-widest">&copy; 2026 Management Information and Communication Technology Unit (SOFTWARE).</p>
+            </footer>
+        </div>
+
+        <!-- ==================== 2. STUDENT DASHBOARD ==================== -->
+        <div id="view-student" class="hidden w-full py-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <!-- Welcome Banner -->
+                <div class="bg-dark-800 rounded-2xl p-6 md:p-8 shadow-2xl mb-8 flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden border border-neutral-800">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-primary-600 opacity-10 rounded-full blur-3xl"></div>
+                    <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-red-900 opacity-20 rounded-full blur-2xl"></div>
+                    
+                    <div class="relative z-10 text-center md:text-left">
+                        <h2 class="text-3xl font-black text-white mb-1">Welcome back, <span id="dash-student-name" class="text-primary-500">Student</span></h2>
+                        <p class="text-neutral-400">MICTU (SOFTWARE) | <span id="dash-student-id" class="text-white font-medium bg-neutral-800 px-2 py-0.5 rounded"></span></p>
+                    </div>
+                    <button onclick="openIdCardModal()" class="relative z-10 bg-primary-600 hover:bg-primary-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(220,38,38,0.3)] flex items-center gap-2">
+                        <i class="fas fa-qrcode"></i> Access Official ID
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left Column: Attendance & Logbook -->
+                    <div class="lg:col-span-2 space-y-6">
+                        
+                        <div class="bg-dark-800 rounded-2xl p-6 border border-neutral-800 shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-white mb-1">System Attendance</h3>
+                                <p id="attendance-status" class="text-sm text-neutral-400"><i class="fas fa-circle text-neutral-600 text-xs mr-1"></i> Not Clocked In</p>
+                            </div>
+                            <button onclick="clockIn()" id="btn-clock-in" class="bg-white text-black hover:bg-neutral-200 font-bold py-2.5 px-6 rounded-xl transition-all w-full md:w-auto shadow-lg">Clock In Now</button>
+                        </div>
+
+                        <div class="bg-dark-800 rounded-2xl p-6 border border-neutral-800 shadow-xl relative overflow-hidden">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <i class="fas fa-code text-primary-500"></i> Daily Logbook Entry
+                            </h3>
+                            <textarea class="w-full bg-dark-900 border border-neutral-700 rounded-xl p-4 text-sm text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none resize-none placeholder-neutral-600 transition-all" rows="5" placeholder="Document your algorithms, code commits, or system tasks completed today..."></textarea>
+                            <div class="mt-4 flex justify-end">
+                                <button onclick="showToast('Logbook entry encrypted and submitted.', 'success')" class="bg-primary-600 hover:bg-primary-500 text-white font-bold py-2.5 px-6 rounded-xl text-sm transition-all">Commit Entry</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Announcements & Feedback -->
+                    <div class="lg:col-span-1 space-y-6">
+                        
+                        <!-- Announcements -->
+                        <div class="bg-dark-800 rounded-2xl p-6 border border-neutral-800 shadow-xl flex flex-col h-[350px]">
+                            <div class="flex items-center gap-3 mb-5 shrink-0">
+                                <div class="w-10 h-10 rounded-xl bg-primary-900/30 border border-primary-500/20 text-primary-500 flex items-center justify-center"><i class="fas fa-satellite-dish"></i></div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white leading-tight">Global Comms</h3>
+                                    <p class="text-xs text-neutral-500">Official Directorate Updates</p>
+                                </div>
+                            </div>
+                            <div id="student-announcements-list" class="flex-grow flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
+                                <!-- Injected by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Private Feedback -->
+                        <div class="bg-dark-800 rounded-2xl p-6 border border-neutral-800 shadow-xl flex flex-col h-[300px]">
+                            <div class="flex items-center gap-3 mb-5 shrink-0">
+                                <div class="w-10 h-10 rounded-xl bg-neutral-800 border border-neutral-700 text-white flex items-center justify-center"><i class="fas fa-lock"></i></div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white leading-tight">Secure Feedback</h3>
+                                    <p class="text-xs text-neutral-500">Direct from Supervisors</p>
+                                </div>
+                            </div>
+                            <div id="student-feedback-list" class="flex-grow flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
+                                <!-- Injected by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 3. SUPERVISOR DASHBOARD ==================== -->
+        <div id="view-supervisor" class="hidden w-full py-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4 border-b border-neutral-800 pb-6">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded bg-red-900/20 text-red-500 text-xs font-bold mb-2 border border-red-900/50 uppercase tracking-wider">
+                            <i class="fas fa-shield-alt"></i> Access Level: Admin
+                        </div>
+                        <h2 class="text-3xl font-black text-white">Command Center</h2>
+                        <p class="text-neutral-400 text-sm mt-1">Monitor infrastructure and dispatch communications.</p>
+                    </div>
+                    <button onclick="openAnnouncementModal()" class="bg-primary-600 hover:bg-primary-500 text-white font-bold py-3 px-6 rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.2)] transition-all flex items-center gap-2">
+                        <i class="fas fa-broadcast-tower"></i> Dispatch Broadcast
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-dark-800 p-6 rounded-2xl border border-neutral-800 shadow-xl flex items-center justify-between relative overflow-hidden">
+                        <div class="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-neutral-700/10 to-transparent"></div>
+                        <div class="relative z-10">
+                            <p class="text-neutral-500 text-sm font-bold uppercase tracking-wider mb-1">Active Personnel</p>
+                            <p id="sup-stat-total" class="text-4xl font-black text-white">0</p>
+                        </div>
+                        <div class="w-14 h-14 bg-dark-900 border border-neutral-700 text-white rounded-xl flex items-center justify-center text-2xl relative z-10"><i class="fas fa-users"></i></div>
+                    </div>
+                    <div class="bg-dark-800 p-6 rounded-2xl border border-neutral-800 shadow-xl flex items-center justify-between relative overflow-hidden">
+                         <div class="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-primary-900/10 to-transparent"></div>
+                        <div class="relative z-10">
+                            <p class="text-neutral-500 text-sm font-bold uppercase tracking-wider mb-1">Transmissions Sent</p>
+                            <p id="sup-stat-announcements" class="text-4xl font-black text-white">0</p>
+                        </div>
+                        <div class="w-14 h-14 bg-primary-900/20 border border-primary-500/20 text-primary-500 rounded-xl flex items-center justify-center text-2xl relative z-10"><i class="fas fa-satellite-dish"></i></div>
+                    </div>
+                </div>
+
+                <div class="bg-dark-800 rounded-2xl border border-neutral-800 shadow-xl overflow-hidden">
+                    <div class="px-6 py-5 border-b border-neutral-800 bg-dark-900 flex justify-between items-center">
+                        <h3 class="font-bold text-white">Intern Directory</h3>
+                        <div class="text-xs text-neutral-500 font-mono">ENCRYPTED DB</div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[700px]">
+                            <thead>
+                                <tr class="bg-dark-800 border-b border-neutral-800 text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                                    <th class="px-6 py-4">Operative Details</th>
+                                    <th class="px-6 py-4">Comms Link</th>
+                                    <th class="px-6 py-4">Assignment</th>
+                                    <th class="px-6 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="supervisor-intern-list" class="divide-y divide-neutral-800/50">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="sup-empty-state" class="hidden flex-col items-center justify-center py-16 text-center bg-dark-900/50">
+                        <div class="w-16 h-16 bg-dark-800 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-600 text-2xl mb-4"><i class="fas fa-user-slash"></i></div>
+                        <p class="text-neutral-400 font-medium">No personnel registered in the database.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== MODALS ==================== -->
+    
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="closeAuthModal()"></div>
+        <div class="relative w-full max-w-md bg-dark-800 border border-neutral-800 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            
+            <div class="flex border-b border-neutral-800 shrink-0 bg-dark-900">
+                <button onclick="switchAuthMode('login')" id="auth-tab-login" class="flex-1 py-4 text-center font-bold text-white border-b-2 border-primary-600 bg-neutral-800/30">Sign In</button>
+                <button onclick="switchAuthMode('register')" id="auth-tab-register" class="flex-1 py-4 text-center font-medium text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/20 border-b-2 border-transparent transition-colors">Register</button>
+            </div>
+            
+            <div class="p-5 pb-0 shrink-0">
+                <div class="bg-dark-900 border border-neutral-800 p-1.5 rounded-xl flex relative">
+                    <button onclick="switchAuthRole('student')" id="role-btn-student" class="flex-1 py-2 text-sm font-bold text-white bg-dark-700 border border-neutral-600 shadow-sm rounded-lg transition-all">Student</button>
+                    <button onclick="switchAuthRole('supervisor')" id="role-btn-supervisor" class="flex-1 py-2 text-sm font-medium text-neutral-500 hover:text-white rounded-lg transition-all">Supervisor</button>
+                </div>
+            </div>
+
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <!-- Login Student -->
+                <form id="form-login-student" class="space-y-4" onsubmit="handleAuthSubmit(event, 'login', 'student')">
+                    <div><input type="email" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-colors" placeholder="Student Email (Any)"></div>
+                    <div><input type="password" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-colors" placeholder="Password (Any)"></div>
+                    <button type="submit" class="w-full bg-primary-600 text-white font-bold py-3.5 rounded-xl hover:bg-primary-500 text-sm mt-2 shadow-[0_0_15px_rgba(220,38,38,0.2)] transition-all">Access Dashboard</button>
+                </form>
+
+                <!-- Login Supervisor -->
+                <form id="form-login-supervisor" class="space-y-4 hidden" onsubmit="handleAuthSubmit(event, 'login', 'supervisor')">
+                    <div><input type="email" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-white outline-none transition-colors" placeholder="Staff Email (Any)"></div>
+                    <div><input type="password" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-white outline-none transition-colors" placeholder="Password (Any)"></div>
+                    <button type="submit" class="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-neutral-200 text-sm mt-2 transition-all">Access Command Center</button>
+                </form>
+
+                <!-- Register Student -->
+                <form id="form-register-student" class="space-y-3 hidden" onsubmit="handleAuthSubmit(event, 'register', 'student')">
+                    <div class="relative group">
+                        <input type="file" id="reg-picture" accept="image/*" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="previewImage(this)">
+                        <div id="upload-placeholder" class="w-full bg-dark-900 border border-neutral-700 border-dashed text-neutral-400 px-4 py-4 rounded-xl text-sm text-center flex flex-col items-center justify-center gap-2 group-hover:border-primary-500 group-hover:text-primary-500 transition-colors">
+                            <i class="fas fa-cloud-upload-alt text-xl"></i>
+                            <span>Upload ID Picture (Required)</span>
+                        </div>
+                        <div id="upload-preview-container" class="hidden w-full bg-dark-900 border border-primary-500 text-white px-4 py-2 rounded-xl text-sm flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <img id="upload-preview-img" src="" alt="Preview" class="w-8 h-8 rounded-full object-cover border border-neutral-700">
+                                <span id="upload-filename" class="truncate max-w-[200px] text-xs">filename.jpg</span>
+                            </div>
+                            <button type="button" onclick="clearImageUpload(event)" class="text-neutral-500 hover:text-red-500 transition-colors"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                    <div><input type="text" id="reg-name" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-primary-500 outline-none" placeholder="Full Name"></div>
+                    <div><input type="text" id="reg-number" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-primary-500 outline-none" placeholder="Registration No."></div>
+                    <div><input type="tel" id="reg-phone" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-primary-500 outline-none" placeholder="WhatsApp Phone No. (e.g. 23480...)"></div>
+                    <div><input type="email" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-primary-500 outline-none" placeholder="Email Address"></div>
+                    <div><input type="password" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-primary-500 outline-none" placeholder="Create Password"></div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="text" id="reg-dept" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-primary-500 outline-none" placeholder="Department">
+                        <select id="reg-level" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-primary-500 outline-none">
+                            <option value="" disabled selected>Level</option>
+                            <option value="200lvl">200 Level</option>
+                            <option value="300lvl">300 Level</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-primary-600 text-white font-bold py-3.5 rounded-xl hover:bg-primary-500 text-sm mt-4 shadow-[0_0_15px_rgba(220,38,38,0.2)] transition-all">Initialize Registration</button>
+                </form>
+
+                <!-- Register Supervisor -->
+                <form id="form-register-supervisor" class="space-y-4 hidden" onsubmit="handleAuthSubmit(event, 'register', 'supervisor')">
+                    <div><input type="text" id="sup-reg-name" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-white outline-none" placeholder="Full Name (e.g. Dr. Smith)"></div>
+                    <div><input type="tel" id="sup-reg-phone" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-white outline-none" placeholder="Phone Number (WhatsApp)"></div>
+                    <div><input type="email" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-white outline-none" placeholder="Staff Email"></div>
+                    <div><input type="password" required class="w-full bg-dark-900 border border-neutral-700 text-white px-4 py-3 rounded-xl text-sm focus:border-white outline-none" placeholder="Create Password"></div>
+                    <button type="submit" class="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-neutral-200 text-sm mt-2 transition-all">Create Admin Account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Broadcast Announcement Modal -->
+    <div id="announcement-modal" class="fixed inset-0 z-[110] hidden flex-col items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeAnnouncementModal()"></div>
+        <div class="relative w-full max-w-lg bg-dark-800 border border-neutral-800 rounded-2xl shadow-2xl p-6">
+            <h3 class="font-black text-xl mb-1 text-white flex items-center gap-2"><i class="fas fa-satellite-dish text-primary-500"></i> Global Broadcast</h3>
+            <p class="text-sm text-neutral-400 mb-5">Transmit updates to all active operatives.</p>
+            
+            <textarea id="announcement-text" rows="4" class="w-full bg-dark-900 border border-neutral-700 text-white rounded-xl p-4 text-sm focus:border-primary-500 outline-none mb-4 resize-none placeholder-neutral-600" placeholder="Type protocol update, meeting info, or status..."></textarea>
+            
+            <label class="flex items-center gap-3 mb-6 p-4 bg-dark-900 border border-neutral-700 rounded-xl cursor-pointer hover:border-neutral-500 transition-colors">
+                <input type="checkbox" id="push-whatsapp" class="w-5 h-5 accent-primary-600 rounded" checked>
+                <div class="text-sm">
+                    <p class="font-bold text-white flex items-center gap-1.5"><i class="fab fa-whatsapp text-green-500"></i> Push to WhatsApp</p>
+                    <p class="text-neutral-500 text-xs mt-0.5">Will open WhatsApp to send to the latest recruit.</p>
+                </div>
+            </label>
+
+            <div class="flex justify-end gap-3">
+                <button onclick="closeAnnouncementModal()" class="px-5 py-2.5 rounded-xl text-sm font-bold text-neutral-400 hover:text-white hover:bg-dark-700 transition-colors">Abort</button>
+                <button onclick="submitAnnouncement()" class="px-6 py-2.5 rounded-xl text-sm font-bold bg-primary-600 text-white hover:bg-primary-500 shadow-[0_0_15px_rgba(220,38,38,0.3)] transition-all">Transmit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supervisor Feedback Modal (Specific Student) -->
+    <div id="feedback-modal" class="fixed inset-0 z-[110] hidden flex-col items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeFeedbackModal()"></div>
+        <div class="relative w-full max-w-md bg-dark-800 border border-neutral-800 rounded-2xl shadow-2xl p-6">
+            <h3 class="font-black text-lg mb-4 text-white">Secure Link to <span id="feedback-student-name" class="text-primary-500"></span></h3>
+            <textarea id="feedback-text" rows="4" class="w-full bg-dark-900 border border-neutral-700 text-white rounded-xl p-4 text-sm focus:border-primary-500 outline-none mb-4 placeholder-neutral-600" placeholder="Encrypt private feedback..."></textarea>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeFeedbackModal()" class="px-5 py-2 rounded-xl text-sm font-bold text-neutral-400 hover:text-white hover:bg-dark-700 transition-colors">Cancel</button>
+                <button onclick="submitFeedback()" class="px-5 py-2 rounded-xl text-sm font-bold bg-white text-black hover:bg-neutral-200 transition-colors">Send Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ID Card Modal -->
+    <div id="id-card-modal" class="fixed inset-0 z-[120] hidden flex-col items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-md" onclick="closeIdCardModal()"></div>
+        <div class="relative w-full max-w-sm flex flex-col items-center">
+            
+            <div class="w-full flex justify-between items-center mb-5">
+                <h3 class="text-white font-bold text-lg tracking-wider uppercase text-sm">Security Clearance</h3>
+                <button onclick="closeIdCardModal()" class="text-neutral-500 hover:text-white text-xl transition-colors"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Printable Card (Forced to specific styles for html2canvas) -->
+            <div id="printable-id-card" class="w-full bg-white rounded-[24px] overflow-hidden shadow-2xl relative">
+                <!-- Top Black Section -->
+                <div class="bg-[#0f172a] p-6 pt-8 pb-14 text-center relative flex flex-col items-center">
+                    
+                    <!-- Flexible Logo Badge (Fixes text clip) -->
+                    <div class="bg-white rounded-full px-5 py-1.5 flex items-center justify-center mb-4 shadow-lg z-10 w-auto inline-block">
+                        <span class="font-black text-lg text-[#0f172a] tracking-widest uppercase">MICTU</span>
+                    </div>
+                    
+                    <h2 class="text-white font-bold text-[11px] leading-snug mb-2 uppercase tracking-widest z-10">
+                        Management Information and<br>Communication Technology Unit
+                    </h2>
+                    
+                    <!-- Fixed software visibility -->
+                    <h3 class="text-neutral-400 font-bold text-[10px] tracking-[0.3em] uppercase z-10">(SOFTWARE)</h3>
+                </div>
+                
+                <!-- White Body Section -->
+                <div class="px-6 pb-6 pt-0 flex flex-col items-center relative bg-white border-t border-white">
+                    
+                    <!-- Profile Picture Container -->
+                    <div class="w-24 h-24 bg-slate-100 rounded-full border-[6px] border-white flex items-center justify-center text-slate-300 text-4xl mb-4 -mt-12 z-20 shadow-sm relative overflow-hidden">
+                        <img id="card-picture" src="" alt="Student ID Picture" class="w-full h-full object-cover hidden">
+                        <i id="card-picture-placeholder" class="fas fa-user"></i>
+                    </div>
+                    
+                    <h4 id="card-name" class="text-[22px] font-black text-[#0f172a] uppercase tracking-tight text-center leading-none mb-2 w-full break-words">NAME</h4>
+                    <p id="card-intern-id" class="text-sm font-black text-red-600 mb-6 tracking-wide">ID</p>
+                    
+                    <!-- Details Section -->
+                    <div class="w-full text-left py-4 mb-2 border-y border-slate-100 flex flex-col gap-4">
+                        <div>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Registration No.</p>
+                            <p id="card-regnum" class="text-[15px] font-bold text-[#0f172a] break-words leading-none">000</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Department</p>
+                                <!-- break-words fixes cutoff -->
+                                <p id="card-dept" class="text-[15px] font-bold text-[#0f172a] break-words leading-tight">Dept</p> 
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Level</p>
+                                <p id="card-level" class="text-[15px] font-bold text-[#0f172a] break-words leading-none">Lvl</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer: Signature & QR -->
+                    <div class="w-full flex justify-between items-end mt-4">
+                        <div class="flex flex-col items-start w-28">
+                            <p class="text-[10px] text-slate-400 font-medium mb-1">Authorized By</p>
+                            <!-- Signature line doesn't overlap text anymore -->
+                            <div class="w-full h-px bg-slate-800 my-2"></div> 
+                            <span class="text-[10px] text-[#0f172a] font-bold uppercase tracking-wider">Director</span>
+                        </div>
+                        <div id="card-qrcode" class="p-1.5 border border-slate-200 rounded-lg bg-white"></div>
+                    </div>
+                </div>
+                <!-- Bottom red accent (solid) -->
+                <div class="h-3 w-full bg-red-600"></div>
+            </div>
+
+            <button id="btn-download-id" onclick="downloadIDCard()" class="mt-8 w-full bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-xl shadow-[0_0_15px_rgba(220,38,38,0.4)] flex items-center justify-center gap-2 transition-all uppercase tracking-wider text-sm">
+                <i class="fas fa-download"></i> Download Clearance
+            </button>
+        </div>
+    </div>
+
+</body>
+</html>
+
+</body>
+</html>
