@@ -81,21 +81,18 @@ function showToast(message, type = 'info') {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
 
-  let styleClasses = '';
-  let icon = '';
+  let styleClasses = 'bg-white border-y border-r border-slate-200 shadow-xl';
+  let icon = '<i class="fas fa-info-circle text-slate-400 text-lg"></i>';
 
   if (type === 'success') {
-    styleClasses = 'bg-dark-800 border-l-4 border-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.2)]';
+    styleClasses = 'bg-white border-y border-r border-slate-200 border-l-4 border-l-emerald-500 shadow-xl';
     icon = '<i class="fas fa-check-circle text-emerald-500 text-lg"></i>';
   } else if (type === 'error') {
-    styleClasses = 'bg-dark-800 border-l-4 border-primary-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.2)]';
+    styleClasses = 'bg-white border-y border-r border-slate-200 border-l-4 border-l-primary-600 shadow-xl';
     icon = '<i class="fas fa-exclamation-triangle text-primary-600 text-lg"></i>';
-  } else {
-    styleClasses = 'bg-dark-800 border-l-4 border-neutral-500 text-white shadow-xl';
-    icon = '<i class="fas fa-info-circle text-neutral-400 text-lg"></i>';
   }
 
-  toast.className = `${styleClasses} px-5 py-4 rounded-r-xl flex items-center gap-3 toast-enter max-w-sm border-y border-r border-neutral-800`;
+  toast.className = `${styleClasses} px-5 py-4 rounded-r-xl flex items-center gap-3 toast-enter max-w-sm text-slate-900`;
   toast.innerHTML = `${icon} <span class="text-sm font-medium leading-tight">${esc(message)}</span>`;
 
   container.appendChild(toast);
@@ -146,9 +143,9 @@ function updateNavState() {
       idBtn.classList.remove('hidden');
       idBtn.classList.add('flex');
       mobContainer.innerHTML = `
-        <div class="px-4 py-2 bg-dark-800 border-b border-neutral-800 text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">Student Access</div>
-        <button onclick="openIdCardModal()" class="w-full text-left px-4 py-3 text-white font-bold rounded-xl"><i class="fas fa-id-badge mr-2 text-primary-500"></i> View ID Card</button>
-        <button onclick="logoutUser()" class="w-full text-left px-4 py-3 text-neutral-400 font-bold rounded-xl mt-2"><i class="fas fa-sign-out-alt mr-2"></i> Disconnect</button>
+        <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Student Access</div>
+        <button onclick="openIdCardModal()" class="w-full text-left px-4 py-3 text-primary-700 font-bold rounded-xl bg-primary-50"><i class="fas fa-id-badge mr-2 text-primary-600"></i> View ID Card</button>
+        <button onclick="logoutUser()" class="w-full text-left px-4 py-3 text-slate-600 font-bold hover:bg-slate-50 rounded-xl mt-2"><i class="fas fa-sign-out-alt mr-2"></i> Disconnect</button>
       `;
       renderStudentDashboard();
       switchView('view-student');
@@ -156,8 +153,8 @@ function updateNavState() {
       idBtn.classList.add('hidden');
       idBtn.classList.remove('flex');
       mobContainer.innerHTML = `
-        <div class="px-4 py-2 bg-dark-800 border-b border-neutral-800 text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">Admin Override</div>
-        <button onclick="logoutUser()" class="w-full text-left px-4 py-3 text-neutral-400 font-bold rounded-xl mt-2"><i class="fas fa-sign-out-alt mr-2"></i> Disconnect</button>
+        <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Admin Override</div>
+        <button onclick="logoutUser()" class="w-full text-left px-4 py-3 text-slate-600 font-bold hover:bg-slate-50 rounded-xl mt-2"><i class="fas fa-sign-out-alt mr-2"></i> Disconnect</button>
       `;
       renderSupervisorDashboard();
       switchView('view-supervisor');
@@ -167,8 +164,8 @@ function updateNavState() {
     privLinks.classList.add('hidden');
     privLinks.classList.remove('flex');
     mobContainer.innerHTML = `
-      <button onclick="openAuthModal('login', 'supervisor')" class="w-full text-left px-4 py-3 text-neutral-300 font-medium hover:bg-dark-800 rounded-xl">Staff Login</button>
-      <button onclick="openAuthModal('register', 'student')" class="w-full px-4 py-3 bg-primary-600 text-white font-bold rounded-xl mt-2 shadow-[0_0_15px_rgba(220,38,38,0.3)]">Apply Now</button>
+      <button onclick="openAuthModal('login', 'supervisor')" class="w-full text-left px-4 py-3 text-slate-600 font-medium hover:bg-slate-50 rounded-xl">Staff Login</button>
+      <button onclick="openAuthModal('register', 'student')" class="w-full px-4 py-3 bg-primary-600 text-white font-bold rounded-xl mt-2 shadow-md">Apply Now</button>
     `;
     switchView('view-landing');
   }
@@ -238,21 +235,21 @@ function updateAuthUI() {
   const tReg = document.getElementById('auth-tab-register');
 
   if (amMode === 'login') {
-    tLog.className = "flex-1 py-4 text-center font-bold text-white border-b-2 border-primary-600 bg-neutral-800/30";
-    tReg.className = "flex-1 py-4 text-center font-medium text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/20 border-b-2 border-transparent transition-colors";
+    tLog.className = "flex-1 py-4 text-center font-bold text-primary-700 border-b-2 border-primary-600 bg-primary-50/50";
+    tReg.className = "flex-1 py-4 text-center font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border-b-2 border-transparent transition-colors";
   } else {
-    tReg.className = "flex-1 py-4 text-center font-bold text-white border-b-2 border-primary-600 bg-neutral-800/30";
-    tLog.className = "flex-1 py-4 text-center font-medium text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/20 border-b-2 border-transparent transition-colors";
+    tReg.className = "flex-1 py-4 text-center font-bold text-primary-700 border-b-2 border-primary-600 bg-primary-50/50";
+    tLog.className = "flex-1 py-4 text-center font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border-b-2 border-transparent transition-colors";
   }
 
   const bStu = document.getElementById('role-btn-student');
   const bSup = document.getElementById('role-btn-supervisor');
   if (amRole === 'student') {
-    bStu.className = "flex-1 py-2 text-sm font-bold text-white bg-dark-700 border border-neutral-600 shadow-sm rounded-lg transition-all";
-    bSup.className = "flex-1 py-2 text-sm font-medium text-neutral-500 hover:text-white rounded-lg transition-all";
+    bStu.className = "flex-1 py-2 text-sm font-bold text-slate-900 bg-white border border-slate-300 shadow-sm rounded-lg transition-all";
+    bSup.className = "flex-1 py-2 text-sm font-medium text-slate-500 hover:text-slate-900 rounded-lg transition-all";
   } else {
-    bSup.className = "flex-1 py-2 text-sm font-bold text-white bg-dark-700 border border-neutral-600 shadow-sm rounded-lg transition-all";
-    bStu.className = "flex-1 py-2 text-sm font-medium text-neutral-500 hover:text-white rounded-lg transition-all";
+    bSup.className = "flex-1 py-2 text-sm font-bold text-slate-900 bg-white border border-slate-300 shadow-sm rounded-lg transition-all";
+    bStu.className = "flex-1 py-2 text-sm font-medium text-slate-500 hover:text-slate-900 rounded-lg transition-all";
   }
 
   ['form-login-student', 'form-login-supervisor', 'form-register-student', 'form-register-supervisor'].forEach(id => {
@@ -309,7 +306,7 @@ async function handleAuthSubmit(e, mode, r) {
     closeAuthModal();
     form.reset();
     if (mode === 'register') resetImageUpload();
-    showToast(mode === 'register' ? 'Registration complete. Security ID generated.' : 'Authentication accepted.', 'success');
+    showToast(mode === 'register' ? 'Registration complete. Security ID Generated.' : 'Authentication accepted.', 'success');
     updateNavState();
     if (mode === 'register') setTimeout(openIdCardModal, 500);
   } catch (err) {
@@ -325,13 +322,13 @@ function renderAttendance() {
   const status = document.getElementById('attendance-status');
 
   if (!todayRecord) {
-    btn.textContent = 'Clock In';
-    btn.className = 'bg-white text-black hover:bg-neutral-200 font-bold py-2.5 px-6 rounded-xl transition-all w-full md:w-auto shadow-lg';
-    status.innerHTML = '<i class="fas fa-circle text-neutral-600 text-xs mr-1"></i> Not Clocked In';
+    btn.textContent = 'Clock In Now';
+    btn.className = 'bg-slate-900 text-white hover:bg-slate-800 font-bold py-2.5 px-6 rounded-xl transition-all w-full md:w-auto shadow-md';
+    status.innerHTML = '<i class="fas fa-circle text-slate-300 text-xs mr-1"></i> Not Clocked In';
   } else {
     btn.textContent = 'Active (Clocked In)';
-    btn.className = 'bg-primary-900/30 text-primary-500 font-bold py-2.5 px-6 rounded-xl w-full md:w-auto cursor-default pointer-events-none border border-primary-500/20';
-    status.innerHTML = `<i class="fas fa-check-circle text-primary-500 mr-1"></i> Clocked In at ${esc(formatTime(todayRecord.clock_in))}`;
+    btn.className = 'bg-primary-50 text-primary-600 font-bold py-2.5 px-6 rounded-xl w-full md:w-auto cursor-default pointer-events-none border border-primary-200';
+    status.innerHTML = `<i class="fas fa-check-circle text-primary-600 mr-1"></i> Clocked In at ${esc(formatTime(todayRecord.clock_in))}`;
   }
 }
 
@@ -360,26 +357,26 @@ async function renderStudentDashboard() {
 
     const list = document.getElementById('student-announcements-list');
     list.innerHTML = announcements.length === 0
-      ? `<div class="text-center py-6 text-neutral-600"><p class="text-sm">No announcements yet.</p></div>`
+      ? `<p class="text-slate-400 text-sm italic text-center py-4">No global transmissions yet.</p>`
       : announcements.map(a => `
-        <div class="p-4 bg-dark-900 border border-neutral-700 rounded-xl text-sm shrink-0">
-          <p class="text-white font-medium mb-2 whitespace-pre-line">${esc(a.body)}</p>
-          <div class="flex justify-between items-center text-xs border-t border-neutral-800 pt-2">
-            <span class="text-neutral-500 font-mono">${esc(formatDate(a.created_at))}</span>
-            <span class="text-neutral-500">${esc(a.author || '')}</span>
+        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm shrink-0">
+          <p class="text-slate-800 font-medium mb-2 whitespace-pre-line">${esc(a.body)}</p>
+          <div class="flex justify-between items-center text-xs border-t border-slate-200 pt-2">
+            <span class="text-slate-500 font-mono">${esc(formatDate(a.created_at))}</span>
+            <span class="text-slate-500">${esc(a.author || '')}</span>
           </div>
         </div>
       `).join('');
 
     const fbList = document.getElementById('student-feedback-list');
     fbList.innerHTML = feedback.length === 0
-      ? `<div class="text-center py-6 text-neutral-600"><i class="fas fa-shield-alt text-2xl mb-2 opacity-30"></i><p class="text-sm">No encrypted feedback available.</p></div>`
+      ? `<div class="text-center py-6 text-slate-400"><i class="fas fa-shield-alt text-2xl mb-2 opacity-50"></i><p class="text-sm">No encrypted feedback available.</p></div>`
       : feedback.map(f => `
-        <div class="p-4 bg-primary-900/10 border border-primary-900/50 rounded-xl text-sm border-l-4 border-l-primary-600 shrink-0">
-          <p class="text-white font-medium mb-2 whitespace-pre-line">${esc(f.message)}</p>
-          <div class="flex justify-between items-center text-xs mt-1 pt-2 border-t border-primary-900/30">
-            <span class="text-primary-500 font-bold"><i class="fas fa-user-tie mr-1"></i>${esc(f.sender_name || 'Staff')}</span>
-            <span class="text-neutral-500 font-mono">${esc(formatDate(f.created_at))}</span>
+        <div class="p-4 bg-primary-50 border border-primary-200 rounded-xl text-sm border-l-4 border-l-primary-600 shrink-0">
+          <p class="text-slate-800 font-medium mb-2 whitespace-pre-line">${esc(f.message)}</p>
+          <div class="flex justify-between items-center text-xs mt-1 pt-2 border-t border-primary-900/10">
+            <span class="text-primary-700 font-bold"><i class="fas fa-user-tie mr-1"></i>${esc(f.sender_name || 'Staff')}</span>
+            <span class="text-slate-500 font-mono">${esc(formatDate(f.created_at))}</span>
           </div>
         </div>
       `).join('');
@@ -411,17 +408,17 @@ async function renderSupervisorDashboard() {
     } else {
       empty.classList.add('hidden'); empty.classList.remove('flex');
       list.innerHTML = interns.map((s, i) => `
-        <tr class="hover:bg-dark-700/50 transition-colors">
+        <tr class="hover:bg-slate-50 border-b border-slate-100 transition-colors">
           <td class="px-6 py-4">
-            <p class="font-bold text-sm text-white">${esc(s.full_name)}</p>
-            <p class="text-xs text-primary-500 font-mono mt-0.5">${esc(s.intern_id)}</p>
+            <p class="font-bold text-sm text-slate-900">${esc(s.full_name)}</p>
+            <p class="text-xs text-primary-600 font-mono mt-0.5">${esc(s.intern_id)}</p>
           </td>
           <td class="px-6 py-4">
-            <p class="text-xs text-neutral-400"><i class="fab fa-whatsapp text-green-500 mr-1"></i> ${esc(s.phone)}</p>
+            <p class="text-xs text-slate-600 font-medium"><i class="fab fa-whatsapp text-emerald-500 mr-1 text-sm"></i> ${esc(s.phone)}</p>
           </td>
-          <td class="px-6 py-4"><p class="text-xs text-neutral-300 bg-dark-900 border border-neutral-700 inline-block px-2 py-1 rounded">${esc(s.department)} (${esc(s.level)}lvl)</p></td>
+          <td class="px-6 py-4"><p class="text-xs text-slate-700 font-medium bg-slate-100 border border-slate-200 inline-block px-2 py-1 rounded-md">${esc(s.department)} (${esc(s.level)}lvl)</p></td>
           <td class="px-6 py-4 text-right">
-            <button onclick="openFeedbackModal(${i})" class="px-4 py-1.5 bg-dark-900 border border-neutral-600 text-white rounded-lg shadow-sm hover:bg-neutral-800 hover:border-neutral-400 text-xs font-bold transition-colors">Message</button>
+            <button onclick="openFeedbackModal(${i})" class="px-4 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-lg shadow-sm hover:bg-slate-50 hover:border-slate-400 text-xs font-bold transition-colors">Message</button>
           </td>
         </tr>
       `).join('');
@@ -431,7 +428,7 @@ async function renderSupervisorDashboard() {
   }
 }
 
-// --- SUPERVISOR ACTIONS (BROADCAST & FEEDBACK) ---
+// --- SUPERVISOR ACTIONS ---
 let selectedStudentIdx = null;
 
 function openFeedbackModal(idx) {
@@ -451,7 +448,7 @@ async function submitFeedback() {
   try {
     await api('/staff/feedback/', { method: 'POST', body: { student: student.user_id, message } });
     closeFeedbackModal();
-    showToast(`Data successfully routed to ${student.full_name}'s node.`, 'success');
+    showToast(`Private feedback routed to ${student.full_name}'s dashboard.`, 'success');
   } catch (err) {
     showToast(err.message, 'error');
   }
@@ -475,11 +472,15 @@ async function submitAnnouncement() {
     closeAnnouncementModal();
     renderSupervisorDashboard();
 
-    if (push && internsCache.length > 0) {
-      const phone = internsCache[0].phone.replace(/\D/g, '');
-      const msg = `*MICTU Portal Alert:*\n\n${text}\n\n_- Dispatched by ${currentUser.full_name}_`;
-      showToast('Opening external WhatsApp link...', 'success');
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    if (push) {
+      if (internsCache.length > 0) {
+        const phone = internsCache[0].phone.replace(/\D/g, '');
+        const msg = `*MICTU Portal Alert:*\n\n${text}\n\n_- Dispatched by ${currentUser.full_name}_`;
+        showToast('Opening external WhatsApp link...', 'success');
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+      } else {
+        showToast('Dashboard updated. No students in DB to receive WhatsApp push.', 'info');
+      }
     } else {
       showToast('Broadcast distributed to all dashboards.', 'success');
     }
